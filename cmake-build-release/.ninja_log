@@ -1,0 +1,8 @@
+# ninja log v5
+53	785	8001061563546048	CMakeFiles/webgpu.dir/wasm_webgpu/lib/lib_webgpu_cpp20.cpp.o	34b7a2e657655c2
+7	700	8002314649692572	CMakeFiles/index.dir/main.c.o	9f2cbd8885d8a48d
+8	807	8001061563738161	CMakeFiles/webgpu.dir/wasm_webgpu/lib/lib_webgpu.cpp.o	676945055cfc0f51
+26	568	8001061615145514	libwebgpu.a	c4af5ef338ba9a57
+701	11530	8002314758132408	index.html	e6b80671057b8674
+35	869	8005770944993643	CMakeFiles/index.dir/main.c.o	9f2cbd8885d8a48d
+870	10210	8005771038511632	index.html	e6b80671057b8674

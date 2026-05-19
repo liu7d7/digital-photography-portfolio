@@ -1,0 +1,3 @@
+[submodule "wasm_webgpu"]
+	path = wasm_webgpu
+	url = https://github.com/juj/wasm_webgpu

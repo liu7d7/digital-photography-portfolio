@@ -1,0 +1,91 @@
+vec3 cga = vec3(0.938, 0.328, 0.718);
+vec3 cgb = vec3(0.659, 0.438, 0.328);
+vec3 cgc = vec3(0.388, 0.388, 0.296);
+vec3 cgd = vec3(2.538, 2.478, 0.168);
+
+  vec3
+cosg(float t, vec3 a, vec3 b, vec3 c, vec3 d)
+{
+  return clamp(a + b * cos(2.*3.1415926*(c * t + d)),0.,1.);
+}
+
+  vec4 
+hash43x(vec3 p)
+{
+  uvec3 x = uvec3(ivec3(p));
+  x = 1103515245U*((x.xyz >> 1U)^(x.yzx));
+  uint h = 1103515245U*((x.x^x.z)^(x.y>>3U));
+  uvec4 rz = uvec4(h, h*16807U, h*48271U, h*69621U); //see: http://random.mat.sbg.ac.at/results/karl/server/node4.html
+  return vec4((rz >> 1) & uvec4(0x7fffffffU))/float(0x7fffffff);
+}
+
+  vec3
+vpow(vec3 a, float b)
+{
+  return vec3(pow(a.x,b), pow(a.y,b), pow(a.z,b));
+}
+
+  vec3 
+star(vec3 rd)
+{
+  vec3 accum = vec3(0.);
+  for (int i = 0; i < 8; i++)
+  {
+    rd = mat3(0.21821789,0.43643578,0.87287156,-0.9701425,0,0.24253563,0.10585122,-0.89973541,0.4234049) * rd;
+    rd = normalize(rd);
+    vec3 r = abs(rd);
+    vec3 p = r / max(r.x, max(r.y, r.z));
+    vec3 m = step(vec3(0.9999999), p);
+    vec3 a = 1. - m;
+    float n = 25.;
+    vec3 z = m * sign(rd);
+    vec3 s = p * a * sign(rd);
+
+    vec3 ip = floor(s * n);
+    vec3 fp = fract(s * n);
+    vec4 h = hash43x(ip+vec3(ivec3(i)*400));
+
+    vec3 g = (fp-.5)-(h.xyz*.6-.3);
+    if (a.x == 0.) g.x = g.z;
+    else if (a.y == 0.) g.y = g.z;
+    g.z = 0.;
+    float rad = length(g)*6.;
+    float ang = atan(g.x,g.y);
+    float w = h.z * 2. * 3.1415926 + 0.5 * (sin(0.5*iTime) + cos(0.2 * iTime - 2.));
+    ang += w;
+    g.xy = mat2(cos(w),sin(w),-sin(w),cos(w)) * g.xy;
+
+    float f = 1./min(max((200.+50.*h.w)*abs(g.x*g.y),0.01),1.2);
+    float e = smoothstep(1.,1.2,f);
+
+    float b = 
+      pow((1.-length(g))*1.1,4.) * pow(h.y,4.)
+      * (sin(32.*h.x+iTime*1.) * .5 + .5) 
+      * (pow(max(r.x, max(r.y, r.z)),10.))
+      * e;
+    accum = accum + vec3(cosg((1. / n * .5 + .5) * b, cga, cgb, cgc, cgd)) * b; 
+  }
+
+  return accum;
+
+}
+
+mat2
+rot(float t) { return mat2(cos(t), -sin(t), sin(t), cos(t)); }
+
+  void
+mainImage(out vec4 fragColor, in vec2 fragCoord)
+{
+  vec2 uv = (fragCoord / iResolution.xy) * 2. - 1.;
+  uv.x *= iResolution.x / iResolution.y;
+  //if (abs(uv.y) > 0.6) return;
+
+  float fovy = 0.;
+  vec3 rd = vec3(uv, 1.);
+  rd.xz = rot(iTime * .01) * rd.xz;
+  rd.xy = rot(iTime * .02) * rd.xy;
+  rd.yz = rot(-iTime * .03) * rd.yz;
+  rd = normalize(rd);
+
+  fragColor = vec4(star(rd), 1.);
+}
