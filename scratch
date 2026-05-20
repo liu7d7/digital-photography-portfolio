@@ -89,3 +89,43 @@ mainImage(out vec4 fragColor, in vec2 fragCoord)
 
   fragColor = vec4(star(rd), 1.);
 }
+
+/*--- draw :> tick camera ---*/
+  {
+    static double last_time = 0;
+    if (last_time != 0) {
+      float delta_time = (float)(time - last_time) * 1e-3f;
+
+      v3_t flat_front = s->cam.front;
+      flat_front.y = 0;
+      v3_normalize(&flat_front);
+
+      v3_t delta = v3_add(
+          v3_add(
+            v3_mul(s->cam.right, input.right), 
+            (v3_t){0, input.up, 0}),
+          v3_mul(flat_front, input.front));
+
+      v3_normalize(&delta);
+
+      float yaw_delta = input.turn_left;
+      float pitch_delta = input.turn_up;
+
+      s->cam.pos = v3_add(s->cam.pos, v3_mul(delta, delta_time));
+      s->cam.yaw += yaw_delta * delta_time;
+      s->cam.pitch += pitch_delta * delta_time;
+
+      if (s->cam.pitch > M_PI_2) s->cam.pitch = M_PI_2 - 0.000001;
+      if (s->cam.pitch < -M_PI_2) s->cam.pitch = -M_PI_2 + 0.000001;
+
+      cam_recalculate_matrix(&s->cam);
+
+      input.up =
+        input.front =
+        input.right =
+        input.turn_left =
+        input.turn_up = 0;
+    }
+
+    last_time = time;
+  }

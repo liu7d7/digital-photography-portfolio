@@ -34,6 +34,7 @@ cmake_path(SET COMMON_DIR NORMALIZE "${CMAKE_CURRENT_LIST_DIR}/wasm_webgpu/sampl
 
 append_compiler_flags("-Wall -Wno-missing-braces")
 append_compiler_flags_debug("-g3")
+append_compiler_flags("-ferror-limit=100")
 
 append_linker_flags("-Wall")
 append_linker_flags_debug("-g3")
@@ -66,7 +67,7 @@ include_directories("${COMMON_DIR}")
 
 add_library(webgpu STATIC ${LIB_DIR}/lib_webgpu.cpp ${LIB_DIR}/lib_webgpu_cpp20.cpp)
 
-add_executable(index main.c)
+add_executable(index main.c images.c input.c)
 target_link_libraries(index webgpu)
 
 
