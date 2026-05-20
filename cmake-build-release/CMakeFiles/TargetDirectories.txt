@@ -1,4 +1,0 @@
-C:/dev/port/cmake-build-release/CMakeFiles/webgpu.dir
-C:/dev/port/cmake-build-release/CMakeFiles/index.dir
-C:/dev/port/cmake-build-release/CMakeFiles/edit_cache.dir
-C:/dev/port/cmake-build-release/CMakeFiles/rebuild_cache.dir
