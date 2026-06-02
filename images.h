@@ -3,10 +3,8 @@
 #include <lib_webgpu.h>
 #include "vecmath.h"
 
-#define n_texs 12
+#define n_texs 14
 
-// number of vertices per frame: 24 quads (frame) + 12 quads (weird cubes) + 1 quad (pic)
-// 37 quads -> 37*6 = 222 vertices
 typedef struct pic_vertex_t
 {
   v3_t pos;
@@ -22,18 +20,20 @@ typedef struct pic_pose_t
 } pic_pose_t;
 
 static char const *tex_paths[] = {
-  "0.jpg",
-  "1.jpg",
-  "2.jpg",
-  "3.jpg",
-  "4.jpg",
-  "5.jpg",
-  "6.jpg",
-  "7.jpg",
-  "8.jpg",
-  "9.jpg",
-  "10.jpg",
-  "11.jpg",
+  "0.webp",
+  "1.webp",
+  "2.webp",
+  "3.webp",
+  "4.webp",
+  "5.webp",
+  "6.webp",
+  "7.webp",
+  "8.webp",
+  "9.webp",
+  "10.webp",
+  "11.webp",
+  "12.webp",
+  "13.webp",
 };
 
 typedef struct downloaded_image_args_t

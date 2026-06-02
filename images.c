@@ -1,4 +1,5 @@
 #include <math.h>
+#include <miniprintf.h>
 #include "images.h"
 #include "state.h"
 
@@ -14,7 +15,10 @@ void downloaded_image(
   int index = args->index;
   state_t *s = args->state;
 
-  if (width == 0) goto fail;
+  if (width == 0) {
+    emscripten_mini_stdio_printf("error downloading image %d; w=%d, h=%d\n", index, width, height);
+    goto fail;
+  }
 
   /*--- dlimg :> s->texs[index] ---*/
   {
@@ -42,7 +46,8 @@ void downloaded_image(
   /*--- dlimg :> s->model_mat_ubs[index] ---*/
   WGpuBuffer mmub; 
   {
-    float yaw = index / (float)n_texs * 4. * M_PI, pitch = random() * (M_PI * 0.999) - M_PI * 0.999 * 0.5;
+    float yaw = index / (float)n_texs * 2. * M_PI, pitch = random() * (M_PI * 0.6) - M_PI * 0.6 * 0.5;
+    if (index == 0) yaw = 0, pitch = 0;
 
     v3_t z = {
       em(cos, yaw) * em(cos, pitch),
@@ -56,9 +61,9 @@ void downloaded_image(
 
     v3_t y = v3_cross(x, z);
 
-    v3_t tr = v3_mul(
-        (v3_t){em(cos, -yaw), random(), em(sin, -yaw)},
-        1.f + random() * 12.f);
+    v3_t tr = v3_add(
+        v3_mul((v3_t){em(cos, -yaw), random(), em(sin, -yaw)}, 4.f * random()),
+        (v3_t){random(), 0.4 * (index % 2), index * 8});
 
     m4_t rmm = {
       x.x, y.x, z.x, tr.x,
@@ -76,7 +81,7 @@ void downloaded_image(
     WGpuBufferDescriptor model_mat_ub_desc = {};
     model_mat_ub_desc.size = sizeof(m4_t);
     model_mat_ub_desc.usage = 
-      WGPU_BUFFER_USAGE_UNIFORM | WGPU_BUFFER_USAGE_COPY_DST;
+      WGPU_BUFFER_USAGE_STORAGE | WGPU_BUFFER_USAGE_COPY_DST;
     model_mat_ub_desc.mappedAtCreation = WGPU_TRUE;
 
     mmub = wgpu_device_create_buffer(s->dev, &model_mat_ub_desc);
@@ -165,5 +170,14 @@ void downloaded_image(
 
 fail:
   (void)atomic_fetch_add(&s->n_texs_loaded, 1);
-  free(args);
+  if (index + 2 >= n_texs) {
+    free(args);
+  } else {
+    args->index += 2;
+    wgpu_load_image_bitmap_from_url_async(
+        tex_paths[args->index], 
+        WGPU_TRUE, 
+        downloaded_image, 
+        args);
+  }
 }

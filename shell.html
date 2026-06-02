@@ -1,71 +1,266 @@
 <!DOCTYPE html>
-<html lang="en-us" style='margin: 0; overflow: hidden'>
-<head>
-<meta charset="utf-8">
-<meta name="referrer" content="strict-origin-when-cross-origin"></meta>
-</head>
-<body style='margin:0; overflow: hidden'>
-<canvas id="canvas" style='display:block; margin:auto;'></canvas>
-<script>
-#if !MODULARIZE
-var Module = {
-#if USE_PTHREADS
-worker: '{{{ PTHREAD_WORKER_FILE }}}'
-#endif
-};
-#endif
+<html lang="en-us" style='margin:0;overflow:hidden;background-color:black;color:white;width:100%;height:100%'>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8">
+    <title>michael liu digital photo</title>
+    <link rel="preload" href="./fdb.otf" as="font" crossorigin>
+    <link rel="preload" href="./fdl.otf" as="font" crossorigin>
+    <meta name="referrer" content="strict-origin-when-cross-origin"></meta>
+    <style type="text/css">
+        @font-face {
+          font-family: "fd";
+          src: url("./fdb.otf") format("opentype");
+        }
 
-var canvas = document.querySelector('canvas');
+        @font-face {
+          font-family: "fti";
+          src: url("./fti.otf") format("opentype");
+        }
 
-function resizeCanvas() {
-  canvas.style.width = window.innerWidth + 'px';
-  canvas.style.height = window.innerHeight + 'px';
-  if (!canvas.isOffscreen) {
-    canvas.width = Math.round(window.innerWidth * window.devicePixelRatio);
-    canvas.height = Math.round(window.innerHeight * window.devicePixelRatio);
-  }
-  if (window.resizeCallback) {
-    getWasmTableEntry(window.resizeCallback)();
-  }
-}
+        i {
+          font-family: "fti";
+        }
+        
+        @font-face {
+          font-family: "fdl";
+          src: url("./fdl.otf") format("opentype");
+        }
+        
+        .clb {
+          border-radius:4rem;border:0.125rem solid white;background-color:black;color:white;padding:0.33rem;padding-left:1rem;padding-right:1rem;font:1rem "fd", sans-serif;transition:transform 0.1s ease-in-out;
+        }
+        
+        .clb:hover {
+          transform:scale(105%);
+          cursor:pointer;
+        }
 
-if (!location.search.includes('windowed')) {
-  resizeCanvas();
-  onresize = resizeCanvas;
-}
+        .smooth-opacity {
+          transition:opacity 0.5s ease-out;
+        }
 
-if (location.search.includes('thumbnail')) {
-  // Save the canvas to file when clicking on it.
-  // Not working: https://bugs.chromium.org/p/chromium/issues/detail?id=1175665
-  canvas.onclick = function() {
-    var img = canvas.toDataURL("image/png");
-    var a = document.createElement('a');
-    a.href = img;
-    a.download = 'canvas.png';
-    a.click();
-  }
-}
+        .tiny-page {
+          width:75vw;
+          height:100vh;
+          padding-left:12.5vw;
+          display:flex;
+          flex-direction:row;
+        }
 
-#if WASM == 2
-var supportsWasm = window.WebAssembly && location.search.indexOf('_rwasm=0') < 0;
-#endif
+        .half {
+          width:50%;
+          height:100%;
+          display:flex;
+          flex-direction:column;
+          place-content:center;
+          align-content:center;
+          align-items:center;
+        }
+    </style>
+  </head>
+  <body style='margin:0;overflow:hidden;background-color:black;position:relative;width:100%;height:100%;'>
+    <canvas id="canvas" class="smooth-opacity" style='display:none;opacity:0;margin:auto;position:absolute;top:0;left:0;'></canvas>
+    <div class='smooth-opacity' id='tiny' style='display:none;opacity:0;margin:auto;position:absolute;top:0;left:0;width:100%;align-content:center;;'>
+      <div class='tiny-page' style='position:relative'>
+        <div class='half'>
+          <img src='14.jpg' style='width:50%;aspect-ratio:1;'></img>
+        </div>
+        <div class='half'>
+          <div style='font:1.5rem "fd", sans-serif;width:100%'>
+            about me!
+          </div>
+          <div style='font:1rem "fdl", sans-serif'>
+            <p>
+              i'm currently a senior at mission san jose high school in fremont, california. i love taking photos of anything that looks interesting to me: nature, technology, architecture, people, or even a combination of all those things! in addition, i'm passionate about graphic design and 3d modeling.
+            </p>
+            <p>
+              outside of photography, i'm an avid coder and i love running, biking, and taking public transport. you'll also find me restoring vintage computers and keyboards in my spare time.
+            </p>
+            <p>
+              welcome to my portfolio! please enjoy this collection of my artwork from my digital photography class and from hobby :D
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class='tiny-page' style='position:relative'>
+        <div class='half'>
+          <div style='display:grid;grid-template-columns:repeat(6,auto);grid-template-rows:repeat(2,auto);width:66%;gap:1rem'>
+            <img style="grid-column:1/span 2;grid-row:1;max-width:100%;" loading="lazy" src="9.webp"></img>
+            <img style="grid-column:3/span 2;grid-row:1;max-width:100%;"loading="lazy" src="10.webp"></img>
+            <img style="grid-column:5/span 2;grid-row:1;max-width:100%;" loading="lazy" src="11.webp"></img>
+            <img style="grid-column:2/span 2;grid-row:2;max-width:100%;" loading="lazy" src="12.webp"></img>
+            <img style="grid-column:4/span 2;grid-row:2;max-width:100%;" loading="lazy" src="13.webp"></img>
+          </div>
+        </div>
+        <div class='half'>
+          <div style='font:1.5rem "fdl", sans-serif;width:100%'>
+            you take public transit? <span style='font:1.5rem "fd", sans-serif'>that tracks.</span>
+          </div>
+          <div style='font:1rem "fdl", sans-serif'>
+            <p>
+            this is a photo essay i created to submit to the 2026 kqed youth media challenge. it centers upon BART, the rapid transport system that we have in the bay area. as mentioned in my bio above, i really do love taking public transport &mdash; i think it's a system that should be treasured and loved, not neglected and stigmatized. 
+            </p>
+            <p>
+            i set out to create with writing and photography a story that tells why i love taking public transit, why it's important to have in our modern society, and what it means to the bay area community.
+            </p>
+            <p>
+            you can see the photo essay here: <a href="https://youthmedia.kqed.org/submission/Njk3MTNhMTE1ZjQ1NDczN2M2OWE1NzNi">https://youthmedia.kqed.org/submission/Njk3MTNhMTE1ZjQ1NDczN2M2OWE1NzNi</a>
+            <p>
+          </div>
+        </div>
+      </div>
+      <div class="tiny-page">
+        <div class="half">
+          <div style='display:grid;grid-template-columns:repeat(3,auto);grid-template-rows:auto;width:75%;gap:1rem;place-items:center;'>
+            <img style="grid-column:1;grid-row:1;max-width:100%;" loading="lazy" src="1.webp"></img>
+            <img style="grid-column:2;grid-row:1;max-width:100%;" loading="lazy" src="7.webp"></img>
+            <img style="grid-column:3;grid-row:1;max-width:100%;" loading="lazy" src="0.webp"></img>
+          </div>
+        </div>
+        <div class="half">
+          <div style='font:1.5rem "fd", sans-serif;width:100%'>
+            objects.
+          </div>
+          <div style='font:1rem "fdl", sans-serif;width:100%'>
+            <p style='width:100%'>
+            it's fun to capture the beauty of everyday objects. there's a lot of effort that people put into designing computers, vases, lights, cups, and whatever you see around you. that effort deserves to be enjoyed and appreciated.
+            </p>
+            <p style='width:100%'>
+            i think that there's a certain feeling that you can get when looking at something &mdash; a feeling that you are in the designer's shoes, as if you are looking at that object for the first time after creating something great &mdash; that gets amplified when you take photos of those objects. one tries to find the angles from which the object looks stunning, and in doing so, one begins to understand at a deeper level the decisions the designer made when designing said object.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="tiny-page">
+        <div class="half">
+           <div style='display:grid;grid-template-columns:2.193fr 1fr;grid-template-rows:auto;height:50%;width:75%;max-width:75%;gap:1rem;place-items:center;'>
+            <img style="grid-column:1;grid-row:1;max-height:100%;max-width:100%;" loading="lazy" src="2.webp"></img>
+            <img style="grid-column:2;grid-row:1;max-height:100%;max-width:100%;" loading="lazy" src="5.webp"></img>
+          </div>
+        </div>
+        <div class="half">
+          <div style='font:1.5rem "fd", sans-serif;width:100%'>
+            artsy.
+          </div>
+          <div style='font:1rem "fdl", sans-serif;width:100%'>
+            <p style='width:100%'>
+            abstract things are beautiful too. there's so much that modern photo editing tools allow us to accomplish with colors, designs, and text, and i love leveraging those abilities to their fullest extent. even if that means sacrificing a bit of reality.
+            </p>
+            <p style='width:100%'>
+            pareidolia is the mental process through which the mind tries to find familiar objects in unfamiliar stimuli. it's possible to destroy all visual clarity at the micro scale while preserving the image as a whole at the macro scale, and i think that's amazing.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="tiny-page">
+        <div class="half">
+           <div style='display:grid;grid-template-columns:1.293fr 1fr;grid-template-rows:auto;height:50%;width:75%;max-width:75%;gap:1rem;place-items:center;'>
+            <img style="grid-column:1;grid-row:1;max-height:100%;max-width:100%;" loading="lazy" src="6.webp"></img>
+            <img style="grid-column:2;grid-row:1;max-height:100%;max-width:100%;" loading="lazy" src="8.webp"></img>
+          </div>
+        </div>
+        <div class="half">
+          <div style='font:1.5rem "fd", sans-serif;width:100%'>
+            blending.
+          </div>
+          <div style='font:1rem "fdl", sans-serif;width:100%'>
+            <p style='width:100%'>
+            i love free software. blender has been shareware since 1998, and it's just wonderful. though the learning curve is steep, the fact that i could make anything with it made me stick with it. blender really allows anyone to create virtual worlds &mdash; whether realistic or not &mdash; in the way that they want. i love it!
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class='smooth-opacity' id='main' style='display:flex;flex-direction:column;margin:auto;position:absolute;top:0;left:0;width:100vw;height:100vh;align-items:center;place-content:center;align-content:center;'>
+      <div style='font:1.5rem "fd", sans-serif;'>
+        michael liu
+      </div>
+      <div style='padding-top:0.5rem'></div>
+      <div style='font:1rem "fdl", sans-serif;'>
+        digital photography, graphic design, 3d modeling
+      </div>
+      <div style='padding-top:1rem'></div>
+      <div style='gap:1rem;display:flex;flex-direction:row'>
+        <button class='clb' onclick='loadWasm()' id='webgpu-button'>webgpu site</button>
+        <button class='clb' id='tiny-button' onclick='loadTiny()'>tiny site</button>
+      </div>
+    </div>
+    <script>
+      #if !MODULARIZE
+      var Module = {
+        #if USE_PTHREADS
+        worker: '{{{ PTHREAD_WORKER_FILE }}}'
+        #endif
+      };
+      #endif
 
-// Depending on the build flags that one uses, different files need to be downloaded
-// to load the compiled page. The right set of files will be expanded to be downloaded
-// via the directive below.
-{{{ DOWNLOAD_JS_AND_WASM_FILES }}}
+      let canvas = document.querySelector('canvas');
 
-#if SINGLE_FILE
-// If we are doing a SINGLE_FILE=1 build, inlined JS runtime code follows here:
-{{{ JS_CONTENTS_IN_SINGLE_FILE_BUILD }}}
+      function resizeCanvas() {
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        if (!canvas.isOffscreen) {
+          canvas.width = Math.round(window.innerWidth * window.devicePixelRatio);
+          canvas.height = Math.round(window.innerHeight * window.devicePixelRatio);
+        }
 
-#if MODULARIZE
-// Launch the MODULARIZEd build.
-{{{ EXPORT_NAME }}}({});
-#endif
+        if (window.resizeCallback) {
+          getWasmTableEntry(window.resizeCallback)();
+        }
+      }
 
-#endif
+      if (!location.search.includes('windowed')) {
+        resizeCanvas();
+        onresize = resizeCanvas;
+      }
 
-</script>
-</body>
+      #if WASM == 2
+      var supportsWasm = window.WebAssembly && location.search.indexOf('_rwasm=0') < 0;
+      #endif
+
+      function loadWasm() {
+        document.getElementById("webgpu-button").onclick = function(){};
+
+        // Depending on the build flags that one uses, different files need to be downloaded
+        // to load the compiled page. The right set of files will be expanded to be downloaded
+        // via the directive below.
+        {{{ DOWNLOAD_JS_AND_WASM_FILES }}}
+
+        document.querySelector("body").style.overflow = 'hidden';
+        document.querySelector("html").style.overflow = 'hidden';
+        document.querySelector("#main").style.opacity = '0';
+        setTimeout(function() { document.querySelector("#main").style.display = "none"; }, 500);
+        document.querySelector("#canvas").style.display = 'block';
+        document.querySelector("#canvas").style.opacity = '100%';
+      }
+
+      function loadTiny() {
+        document.getElementById("tiny-button").onclick = function(){};
+        document.querySelector("body").style.overflowY = 'scroll';
+        document.querySelector("#main").style.opacity = '0';
+        document.querySelector("#tiny").style.display = 'block';
+        setTimeout(function() { 
+          document.querySelector("#main").style.display = "none"; 
+          document.querySelector("#tiny").style.opacity = '100%';
+        }, 500);
+      }
+
+    </script>
+  </body>
+  <link rel="preload" href="./0.webp" as="image" crossorigin>
+  <link rel="preload" href="./1.webp" as="image" crossorigin>
+  <link rel="preload" href="./2.webp" as="image" crossorigin>
+  <link rel="preload" href="./3.webp" as="image" crossorigin>
+  <link rel="preload" href="./4.webp" as="image" crossorigin>
+  <link rel="preload" href="./5.webp" as="image" crossorigin>
+  <link rel="preload" href="./6.webp" as="image" crossorigin>
+  <link rel="preload" href="./7.webp" as="image" crossorigin>
+  <link rel="preload" href="./8.webp" as="image" crossorigin>
+  <link rel="preload" href="./9.webp" as="image" crossorigin>
+  <link rel="preload" href="./10.webp" as="image" crossorigin>
+  <link rel="preload" href="./11.webp" as="image" crossorigin>
+  <link rel="preload" href="./12.webp" as="image" crossorigin>
+  <link rel="preload" href="./13.webp" as="image" crossorigin>
 </html>

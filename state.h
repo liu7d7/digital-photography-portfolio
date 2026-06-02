@@ -12,13 +12,15 @@
   x(WGpuRenderPipeline, stars_rp) \
   x(WGpuRenderPipeline, crt_rp) \
   x(WGpuCanvasContext, ctx) \
-  x(WGpuCommandEncoder, cmds) \
   x(WGpuBuffer, cam_ub) \
   x(WGpuBuffer, post_ub) \
   x(WGpuBindGroup, stars_bg) \
   x(WGpuBindGroup, crt_bg_0) \
   x(WGpuBuffer, post_vb) \
-  x(WGpuSampler, d_samp) 
+  x(WGpuSampler, d_samp)
+
+#define x_state_all_wgpu_per_frame_fields \
+  x(WGpuCommandEncoder, cmds) \
 
 #define x_state_all_wgpu_dependent_fields \
   x(WGpuBindGroup, crt_bg_1) \
@@ -33,12 +35,12 @@
   x(WGpuBuffer, opacity_ubs, 2) \
   x(WGpuBindGroup, per_frame_bgs, 2)
 
-typedef
-struct state_t
+typedef struct state_t
 {
 #define x(a, b) a b;
   x_state_all_wgpu_persistent_fields;
   x_state_all_wgpu_dependent_fields;
+  x_state_all_wgpu_per_frame_fields;
 #undef x
 
 #define x(a, b, c) a b[c];
@@ -48,7 +50,7 @@ struct state_t
   pic_pose_t poses[n_texs];
 
   cam_t cam;
-  float time;
+  float time, time_loaded_imgs;
   float anim_progress;
   int prev_index, current_index;
 
@@ -56,3 +58,15 @@ struct state_t
 
   v2_t configured_window_size;
 } state_t;
+
+WGpuRenderPipeline state_new_render_pipeline(
+    state_t *s,
+    int n_buffers,
+    WGpuVertexBufferLayout *vb_layout,
+    char const *vss,
+    char const *vs_entrypoint,
+    char const *fss,
+    char const *fs_entrypoint,
+    int n_targets,
+    WGpuColorTargetState *color_target_states);
+

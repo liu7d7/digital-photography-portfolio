@@ -17,8 +17,8 @@ static char const *vertex_shader_source =
 "  proj : mat4x4f,\n"
 "};\n"
 
-"@group(0) @binding(0) var<uniform> camera : camera_t;\n"
-"@group(1) @binding(2) var<uniform> model : mat4x4f;\n"
+"@group(0) @binding(0) var<storage> camera : camera_t;\n"
+"@group(1) @binding(2) var<storage> model : mat4x4f;\n"
 
 "@vertex\n"
 "fn main(in : in_t) -> out_t {\n"
@@ -33,7 +33,7 @@ static char const *vertex_shader_source =
 "}\n";
 
 static char const *fragment_shader_source =
-"@group(0) @binding(1) var<uniform> opacity : f32;\n"
+"@group(0) @binding(1) var<storage> opacity : f32;\n"
 
 "@group(1) @binding(0) var b_texture : texture_2d<f32>;\n"
 "@group(1) @binding(1) var b_sampler : sampler;\n"
@@ -65,8 +65,9 @@ static char const *post_process_vertex_shader_source =
 "  one_texel : vec2f,\n" \
 "  res : vec2f,\n" \
 "  time : f32,\n" \
+"  opac : f32,\n" \
 "};\n" \
-"@group(0) @binding(0) var<uniform> uni : post_input_t;\n"
+"@group(0) @binding(0) var<storage> uni : post_input_t;\n"
 
 static char const *stars_fragment_shader_source =
 post_process_fragment_shader_source_prelude
@@ -92,7 +93,7 @@ post_process_fragment_shader_source_prelude
 "  var rd = _rd;\n"
 "  let n = 25.;\n"
 
-"  for (var i = 0; i < 8; i++) {\n"
+"  for (var i = 0; i < 3; i++) {\n"
 "    rd = mat3x3f(0.63322557,0.6840354,0.36210626,"
 "                 0.41076351,-0.69354841,0.591831,"
 "                 0.65597158,-0.22602248,-0.72014937) * rd;\n"
@@ -112,8 +113,8 @@ post_process_fragment_shader_source_prelude
 "    let h = hash43x(ip + vec3f(vec3i(i) * 900));\n"
 
 "    var g = (fp - .5) - (h.xyz * .6 - .3);\n"
-"    if a.x == 0. { g.x = g.z; }\n"
-"    else if a.y == 0. { g.y = g.z; }\n"
+"    g.x = mix(g.z, g.x, a.x);\n"
+"    g.y = mix(g.z, g.y, a.y);\n"
 "    g.z = 0.;\n"
 
 "    let w = h.z * 2. * 3.1415926 + 0.5 * (sin(0.5 + uni.time + 40. * h.z) + cos(0.2 * uni.time - 2. + 40. * h.z));\n"
@@ -123,12 +124,12 @@ post_process_fragment_shader_source_prelude
 
 "    let e = smoothstep(0.8, 1.2, 1. / min(max((200. + 50. * h.w) * abs(g.x * g.y), 0.01), 1.2));\n"
 
-"    let b = pow((1. - length(g)) * 1.1, 4.) * pow(h.y, 4.)\n"
+"    let b = pow((1. - length(g)) * 1.1 * h.y, 4.)\n"
 "            * (sin(32. * h.x + uni.time) * .5 + .5)\n"
-"            * pow(max(r.x, max(r.y, r.z)), 10.)\n"
+"            * pow(max(r.x, max(r.y, r.z)), 6.)\n"
 "            * e;\n"
 
-"    accum = accum + cosg(pow(max(b, 0.), 1.4)) * max(b, 0.);\n"
+"    accum += cosg(max(b, 0.)) * max(b, 0.);\n"
 "  }\n"
 
 "  return accum;\n"
@@ -139,8 +140,8 @@ post_process_fragment_shader_source_prelude
 "  var uv = _uv * 2. - 1.;\n"
 "  uv.x *= uni.res.x / uni.res.y;\n"
 "  let fovy = 3.1415926 / 4.;\n"
-"  let rd = mat3x3f(uni.view[0].xyz, uni.view[1].xyz, -uni.view[2].xyz) * normalize(vec3f(uv, 1. / tan(fovy)));\n"
-"  return vec4f(star(rd), 1.);\n"
+"  let rd = uni.view * vec4f(normalize(vec3f(uv, -1. / tan(fovy))), 0.);\n"
+"  return vec4f(star(rd.xyz), 1.);\n"
 "}\n";
 
 static char const *crt_fragment_shader_source =
@@ -164,6 +165,44 @@ post_process_fragment_shader_source_prelude
 "    textureSample(b_texture, b_sampler, (crtUV-.5)/1.002+.5).b\n"
 "  ) * edge.x * edge.y;\n"
 
-"  return vec4f(fragColor * (1. - scan), 1.);\n"
+"  return vec4f(fragColor * (1. - scan) * uni.opac, 1.);\n"
+"}\n";
+
+static char const *font_vertex_shader_source =
+"struct in_t {\n"
+"  @location(0) pos : vec3f,\n"
+"  @location(1) tex : vec2f\n"
+"};\n"
+
+"struct out_t {\n"
+"  @builtin(position) pos : vec4f,\n"
+"  @location(0) tex : vec2f\n"
+"};\n"
+
+"struct camera_t {\n"
+"  view : mat4x4f,\n"
+"  proj : mat4x4f,\n"
+"}\n"
+
+"@group(0) @binding(0) var<storage> cam : camera_t;\n"
+"@group(1) @binding(2) var<storage> model : mat4x4f;\n"
+
+"@vertex\n"
+"fn main(in : in_t) -> out_t {\n"
+"  var out : out_t;\n"
+"  out.pos = vec4f(in.pos, 1.) * cam.view * cam.proj;\n"
+"  out.tex = in.tex;\n"
+"  return out;\n"
+"}\n";
+
+static char const *font_fragment_shader_source =
+"@group(1) @binding(0) var b_texture : texture_2d<f32>;\n"
+"@group(1) @binding(1) var b_sampler : sampler;\n"
+
+"@fragment\n"
+"fn main(@location(0) tex : vec2f) -> @location(0) vec4f {\n"
+"  let c = textureSample(b_texture, b_sampler, tex);\n"
+"  if c.a < 0.01 { discard; }\n"
+"  return c;\n"
 "}\n";
 

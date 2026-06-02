@@ -1,17 +1,14 @@
-#include <string.h>
 #include <math.h>
 #include <stdatomic.h>
 #include <lib_webgpu.h>
 #include <lib_demo.h>
 #include <miniprintf.h>
+#include <assert.h>
 
-#define STB_RECT_PACK_IMPLEMENTATION
-#include "stb_rect_pack.h"
-
+#include "input.h"
+#include "lib_dlbin.h"
 #include "vecmath.h"
 #include "images.h"
-#include "input.h"
-#include "anim.h"
 #include "shader_sources.h"
 #include "state.h"
 
@@ -20,7 +17,8 @@ typedef struct post_input_t {
   v2_t one_texel;
   v2_t resolution;
   float time;
-  float pad[3];
+  float opac;
+  float pad[2];
 } post_input_t;
 
 void obtained_web_gpu_device(
@@ -31,8 +29,8 @@ int draw(double time, void *user_data)
 {
   // done?: create render pass and render
   // done?: create logic for sorting picture frames
-  // TODO: create animation logic
-  // TODO: create logic for drawing frame hanger things
+  // done?: create animation logic
+  // forgone: create logic for drawing frame hanger things
 
   state_t *s = user_data;
 
@@ -47,7 +45,7 @@ int draw(double time, void *user_data)
   }
 
   s->time = (float)time;
-  s->anim_progress = v_lerp(s->anim_progress, 1.f, 0.04f);
+  s->anim_progress = v_lerp(s->anim_progress, 1.f, 0.03f);
   s->cmds = wgpu_device_create_command_encoder(s->dev, NULL);
 
   WGpuRenderPassColorAttachment backbuf =
@@ -56,6 +54,21 @@ int draw(double time, void *user_data)
   backbuf.clearValue.g =
   backbuf.clearValue.b = 0.0;
   backbuf.clearValue.a = 1.0;
+
+  if (atomic_load(&s->n_texs_loaded) != n_texs) {
+    backbuf.view =
+      wgpu_canvas_context_get_current_texture_view(s->ctx);
+    backbuf.loadOp = WGPU_LOAD_OP_CLEAR;
+
+    WGpuRenderPassDescriptor rp_desc = {};
+    rp_desc.numColorAttachments = 1;
+    rp_desc.colorAttachments = &backbuf;
+
+    wgpu_render_pass_encoder_end(wgpu_command_encoder_begin_render_pass(s->cmds, &rp_desc));
+
+    s->time_loaded_imgs = s->time;
+    goto end;
+  }
 
   /*--- draw :> update post-process buffer ---*/
   {
@@ -68,6 +81,7 @@ int draw(double time, void *user_data)
 
     post_input.view = s->cam.view;
     post_input.time = time * 1e-3f;
+    post_input.opac = fminf(1.f, em(sqrt, (s->time - s->time_loaded_imgs) / 500.f));
 
     wgpu_queue_write_buffer(
         wgpu_device_get_queue(s->dev),
@@ -150,23 +164,6 @@ int draw(double time, void *user_data)
         sizeof(v2_t) * 6);
 
     wgpu_render_pass_encoder_draw(enc, 6, 1, 0, 0);
-    wgpu_render_pass_encoder_end(enc);
-
-    wgpu_object_destroy(enc);
-  }
-
-  /*--- draw :> images ---*/
-  if (atomic_load(&s->n_texs_loaded) == n_texs)
-  {
-    backbuf.view = s->scratch_tex_0_view;
-    backbuf.loadOp = WGPU_LOAD_OP_LOAD;
-
-    WGpuRenderPassDescriptor render_pass_desc = {};
-    render_pass_desc.numColorAttachments = 1;
-    render_pass_desc.colorAttachments = &backbuf;
-
-    WGpuRenderPassEncoder enc =
-      wgpu_command_encoder_begin_render_pass(s->cmds, &render_pass_desc);
 
     wgpu_render_pass_encoder_set_pipeline(enc, s->main_rp);
 
@@ -238,6 +235,7 @@ int draw(double time, void *user_data)
     wgpu_object_destroy(enc);
   }
 
+end:
   wgpu_queue_submit_one_and_destroy(
       wgpu_device_get_queue(s->dev), 
       wgpu_command_encoder_finish(s->cmds));
@@ -266,7 +264,7 @@ void obtained_web_gpu_device(
     wgpu_canvas_context_configure(s->ctx, &config);
   }
 
-  /*--- init :> s->scratch_tex_0 ---*/
+    /*--- init :> s->scratch_tex_0 ---*/
   if (!s->scratch_tex_0) {
     WGpuTextureDescriptor tex_desc = 
       WGPU_TEXTURE_DESCRIPTOR_DEFAULT_INITIALIZER;
@@ -289,18 +287,6 @@ void obtained_web_gpu_device(
     s->d_samp = wgpu_device_create_sampler(s->dev, &sd);
   }
 
-  WGpuColorTargetState color_target = 
-    WGPU_COLOR_TARGET_STATE_DEFAULT_INITIALIZER;
-  color_target.format = navigator_gpu_get_preferred_canvas_format();
-  color_target.blend.color.operation = WGPU_BLEND_OPERATION_ADD;
-  color_target.blend.color.srcFactor = WGPU_BLEND_FACTOR_SRC_ALPHA;
-  color_target.blend.color.dstFactor = WGPU_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-  color_target.blend.alpha.operation = WGPU_BLEND_OPERATION_ADD;
-  color_target.blend.alpha.srcFactor = WGPU_BLEND_FACTOR_ZERO;
-  color_target.blend.alpha.dstFactor = WGPU_BLEND_FACTOR_ONE;
-
-  WGpuShaderModuleDescriptor shader_desc_temp = {};
-
   /*--- init :> s->main_rp ---*/
   if (!s->main_rp) {
     WGpuVertexAttribute attrs[2] = {
@@ -322,33 +308,18 @@ void obtained_web_gpu_device(
       .arrayStride = 20
     };
 
-    WGpuRenderPipelineDescriptor rp_desc = 
-      WGPU_RENDER_PIPELINE_DESCRIPTOR_DEFAULT_INITIALIZER;
-
-    rp_desc.vertex.numBuffers = 1;
-    rp_desc.vertex.buffers = &vb_layout;
-
-    shader_desc_temp.code = vertex_shader_source;
-    rp_desc.vertex.module = 
-      wgpu_device_create_shader_module(s->dev, &shader_desc_temp);
-    rp_desc.vertex.entryPoint = "main";
-
-    shader_desc_temp.code = fragment_shader_source;
-    rp_desc.fragment.module = 
-      wgpu_device_create_shader_module(s->dev, &shader_desc_temp);
-    rp_desc.fragment.entryPoint = "main";
-
-    rp_desc.fragment.numTargets = 1;
-    rp_desc.fragment.targets = &color_target;
-
-    s->main_rp = 
-      wgpu_device_create_render_pipeline(s->dev, &rp_desc);
+    s->main_rp = state_new_render_pipeline(
+        s,
+        1, &vb_layout,
+        vertex_shader_source, "main",
+        fragment_shader_source, "main",
+        0, NULL);
   }
   
   /*--- init :> s->stars_rp, s->crt_rp ---*/
   if (!s->stars_rp || !s->crt_rp) {
-    WGpuVertexAttribute attrs[1] = {
-      [0] = {
+    WGpuVertexAttribute attrs[] = {
+      {
         .format = WGPU_VERTEX_FORMAT_FLOAT32X2,
         .offset = 0,
         .shaderLocation = 0
@@ -361,55 +332,40 @@ void obtained_web_gpu_device(
       .arrayStride = 8
     };
 
-    WGpuRenderPipelineDescriptor rp_desc =
-      WGPU_RENDER_PIPELINE_DESCRIPTOR_DEFAULT_INITIALIZER;
-
-    rp_desc.vertex.numBuffers = 1;
-
-    rp_desc.vertex.numBuffers = 1;
-    rp_desc.vertex.buffers = &vb_layout;
-
-    shader_desc_temp.code = post_process_vertex_shader_source;
-    rp_desc.vertex.module = 
-      wgpu_device_create_shader_module(s->dev, &shader_desc_temp);
-    rp_desc.vertex.entryPoint = "main";
-
-    shader_desc_temp.code = stars_fragment_shader_source;
-    rp_desc.fragment.module = 
-      wgpu_device_create_shader_module(s->dev, &shader_desc_temp);
-    rp_desc.fragment.entryPoint = "main";
-
-    rp_desc.fragment.numTargets = 1;
-    rp_desc.fragment.targets = &color_target;
-
     wgpu_object_destroy(s->stars_rp);
-    s->stars_rp = wgpu_device_create_render_pipeline(s->dev, &rp_desc);
-
-    shader_desc_temp.code = crt_fragment_shader_source;
-    rp_desc.fragment.module =
-      wgpu_device_create_shader_module(s->dev, &shader_desc_temp);
-    rp_desc.fragment.entryPoint = "main";
+    s->stars_rp = state_new_render_pipeline(
+        s,
+        1, &vb_layout,
+        post_process_vertex_shader_source, "main",
+        stars_fragment_shader_source, "main",
+        0, NULL);
 
     wgpu_object_destroy(s->crt_rp);
-    s->crt_rp = wgpu_device_create_render_pipeline(s->dev, &rp_desc);
+    s->crt_rp = state_new_render_pipeline(
+        s,
+        1, &vb_layout,
+        post_process_vertex_shader_source, "main",
+        crt_fragment_shader_source, "main",
+        0, NULL);
   }
 
-  for (int i = 0; i < n_texs; i++) {
-    if (s->texs[i]) continue;
+  /*--- init :> s->texs ---*/
+  if (!s->texs[0]) {
+    for (int i = 0; i < 2; i++) {
+      downloaded_image_args_t *args = malloc(sizeof(downloaded_image_args_t));
+      args->index = i;
+      args->state = s;
 
-    downloaded_image_args_t *args = malloc(sizeof(downloaded_image_args_t));
-    args->index = i;
-    args->state = s;
+      emscripten_mini_stdio_printf(
+          "attempting download image: src=%s\n",
+          tex_paths[i]);
 
-    emscripten_mini_stdio_printf(
-        "attempting download image: src=%s\n",
-        tex_paths[i]);
-
-    wgpu_load_image_bitmap_from_url_async(
-        tex_paths[i], 
-        WGPU_TRUE, 
-        downloaded_image, 
-        args);
+      wgpu_load_image_bitmap_from_url_async(
+          tex_paths[i], 
+          WGPU_TRUE, 
+          downloaded_image, 
+          args);
+    }
   }
 
   s->cam.proj = create_perspective_matrix(EM_MATH_PI / 4., 0.01, 100);
@@ -420,7 +376,7 @@ void obtained_web_gpu_device(
     WGpuBufferDescriptor ub_desc = {};
     ub_desc.size = sizeof(float);
     ub_desc.usage = 
-      WGPU_BUFFER_USAGE_UNIFORM | WGPU_BUFFER_USAGE_COPY_DST;
+      WGPU_BUFFER_USAGE_STORAGE | WGPU_BUFFER_USAGE_COPY_DST;
     ub_desc.mappedAtCreation = WGPU_FALSE;
 
     s->opacity_ubs[0] = wgpu_device_create_buffer(s->dev, &ub_desc);
@@ -431,8 +387,7 @@ void obtained_web_gpu_device(
   if (!s->cam_ub) {
     WGpuBufferDescriptor ub_desc = {};
     ub_desc.size = sizeof(cam_t);
-    ub_desc.usage = 
-      WGPU_BUFFER_USAGE_UNIFORM | WGPU_BUFFER_USAGE_COPY_DST;
+    ub_desc.usage = WGPU_BUFFER_USAGE_STORAGE | WGPU_BUFFER_USAGE_COPY_DST;
     ub_desc.mappedAtCreation = WGPU_FALSE;
 
     s->cam_ub = wgpu_device_create_buffer(s->dev, &ub_desc);
@@ -442,8 +397,7 @@ void obtained_web_gpu_device(
   if (!s->post_ub) {
     WGpuBufferDescriptor ub_desc = {};
     ub_desc.size = sizeof(post_input_t);
-    ub_desc.usage = 
-      WGPU_BUFFER_USAGE_UNIFORM | WGPU_BUFFER_USAGE_COPY_DST;
+    ub_desc.usage = WGPU_BUFFER_USAGE_STORAGE | WGPU_BUFFER_USAGE_COPY_DST;
     ub_desc.mappedAtCreation = WGPU_FALSE;
 
     s->post_ub = wgpu_device_create_buffer(s->dev, &ub_desc);
@@ -551,12 +505,14 @@ void obtained_web_gpu_device(
   wgpu_request_animation_frame_loop(draw, s);
 }
 
-void
-obtained_web_gpu_adapter(WGpuAdapter result, void *user_data)
+void obtained_web_gpu_adapter(WGpuAdapter result, void *user_data)
 {
   state_t *s = user_data;
 
   s->adapter = result;
+  WGpuAdapterInfo adapter_info = {};
+  wgpu_adapter_get_info(s->adapter, &adapter_info);
+  emscripten_mini_stdio_printf("%s; %s; %s\n", adapter_info.vendor, adapter_info.device, adapter_info.architecture);
 
   WGpuDeviceDescriptor dev_desc = {};
   wgpu_adapter_request_device_async(
@@ -568,14 +524,14 @@ obtained_web_gpu_adapter(WGpuAdapter result, void *user_data)
 
 state_t state;
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
-  state.cam.pos = (v3_t){0, 0, 3};
-  state.cam.yaw = -M_PI_2;
   state.anim_progress = 1.f;
 
-  WGpuRequestAdapterOptions options = {};
+  WGpuRequestAdapterOptions options = {
+    .powerPreference = WGPU_POWER_PREFERENCE_HIGH_PERFORMANCE 
+  };
+
   navigator_gpu_request_adapter_async(
       &options, 
       obtained_web_gpu_adapter,
