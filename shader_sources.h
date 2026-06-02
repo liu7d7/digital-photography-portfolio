@@ -9,7 +9,6 @@ static char const *vertex_shader_source =
 "struct out_t {\n"
 "  @builtin(position) pos : vec4<f32>,\n"
 "  @location(0) uv : vec2<f32>,\n"
-"  @location(1) z : f32,\n"
 "};\n"
 
 "struct camera_t {\n"
@@ -23,12 +22,9 @@ static char const *vertex_shader_source =
 "@vertex\n"
 "fn main(in : in_t) -> out_t {\n"
 "  var out : out_t;\n"
-// "  let pos = model * vec4<f32>(in.pos, 1.0);\n"
-// "  out.pos = camera.proj * camera.view * pos;\n"
 "  let pos = vec4<f32>(in.pos, 1.0) * model;\n"
 "  out.pos = pos * camera.view * camera.proj;\n"
 "  out.uv = in.uv;\n"
-"  out.z = pos.z;\n"
 "  return out;\n"
 "}\n";
 
@@ -39,9 +35,10 @@ static char const *fragment_shader_source =
 "@group(1) @binding(1) var b_sampler : sampler;\n"
 
 "@fragment\n"
-"fn main(@location(0) uv : vec2<f32>, @location(1) z : f32) -> @location(0) vec4<f32> {\n"
+"fn main(@location(0) uv : vec2<f32>) -> @location(0) vec4<f32> {\n"
 "  var out_color : vec4<f32> = select(textureSample(b_texture, b_sampler, vec2<f32>(uv.x, uv.y)), vec4<f32>(0., 0., 0., 1.), uv.x < 0 && uv.y < 0);\n"
-"  out_color.a = opacity;\n"  
+"  out_color.a *= opacity;\n"
+"  if out_color.a < 0.01 { discard; }"
 "  return out_color;\n"
 "}\n";
 
@@ -167,42 +164,3 @@ post_process_fragment_shader_source_prelude
 
 "  return vec4f(fragColor * (1. - scan) * uni.opac, 1.);\n"
 "}\n";
-
-static char const *font_vertex_shader_source =
-"struct in_t {\n"
-"  @location(0) pos : vec3f,\n"
-"  @location(1) tex : vec2f\n"
-"};\n"
-
-"struct out_t {\n"
-"  @builtin(position) pos : vec4f,\n"
-"  @location(0) tex : vec2f\n"
-"};\n"
-
-"struct camera_t {\n"
-"  view : mat4x4f,\n"
-"  proj : mat4x4f,\n"
-"}\n"
-
-"@group(0) @binding(0) var<storage> cam : camera_t;\n"
-"@group(1) @binding(2) var<storage> model : mat4x4f;\n"
-
-"@vertex\n"
-"fn main(in : in_t) -> out_t {\n"
-"  var out : out_t;\n"
-"  out.pos = vec4f(in.pos, 1.) * cam.view * cam.proj;\n"
-"  out.tex = in.tex;\n"
-"  return out;\n"
-"}\n";
-
-static char const *font_fragment_shader_source =
-"@group(1) @binding(0) var b_texture : texture_2d<f32>;\n"
-"@group(1) @binding(1) var b_sampler : sampler;\n"
-
-"@fragment\n"
-"fn main(@location(0) tex : vec2f) -> @location(0) vec4f {\n"
-"  let c = textureSample(b_texture, b_sampler, tex);\n"
-"  if c.a < 0.01 { discard; }\n"
-"  return c;\n"
-"}\n";
-

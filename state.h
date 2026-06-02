@@ -4,6 +4,8 @@
 #include <lib_webgpu.h>
 #include "vecmath.h"
 #include "images.h"
+#include "font.h"
+#include "desc.h"
 
 #define x_state_all_wgpu_persistent_fields \
   x(WGpuAdapter, adapter) \
@@ -33,6 +35,7 @@
   x(WGpuBuffer, model_mat_ubs, n_texs) \
   x(WGpuBindGroup, per_obj_bgs, n_texs) \
   x(WGpuBuffer, opacity_ubs, 2) \
+  x(WGpuBuffer, font_opacity_ubs, 2) \
   x(WGpuBindGroup, per_frame_bgs, 2)
 
 typedef struct state_t
@@ -57,6 +60,9 @@ typedef struct state_t
   atomic_int n_texs_loaded;
 
   v2_t configured_window_size;
+
+  font_metadata_t font;
+  desc_set_t descs;
 } state_t;
 
 WGpuRenderPipeline state_new_render_pipeline(

@@ -38,8 +38,8 @@ static uint8_t *read_bin_file(char const *path)
 int main() 
 {
   uint8_t *fb[N] = {
-    read_bin_file("fdl.otf"),
-    read_bin_file("fdb.otf"),
+    read_bin_file("ip0.ttf"),
+    read_bin_file("ip1.ttf"),
   };
 
   assert(fb[0] != NULL);
@@ -52,25 +52,28 @@ int main()
 
   stbtt_fontinfo fi[N];
   struct metrics {
+    int line_gap[2];
     int ascent[2];
-    float ascent_in_pixels[2];
+    float scale_to_one[2];
   } mt;
 
   size_t pch_size = sizeof(stbtt_packedchar) * 512 + sizeof(struct metrics);
   void *pch = malloc(pch_size);
   for (int i = 0; i < N; i++) {
-    (void)stbtt_PackFontRange(&pc, fb[i], 0, 480, 0, 256, pch + sizeof(struct metrics) + i * 256 * sizeof(stbtt_packedchar));
+    (void)stbtt_PackFontRange(&pc, fb[i], 0, STBTT_POINT_SIZE(320), 0, 256, pch + sizeof(struct metrics) + i * 256 * sizeof(stbtt_packedchar));
     (void)stbtt_InitFont(&fi[i], fb[i], 0);
-    stbtt_GetFontVMetrics(&fi[i], &mt.ascent[i], NULL, NULL); 
-    mt.ascent_in_pixels[i] = (float)mt.ascent[i] * stbtt_ScaleForMappingEmToPixels(&fi[i], 32); 
+    stbtt_GetFontVMetrics(&fi[i], &mt.ascent[i], NULL, &mt.line_gap[i]); 
+    mt.scale_to_one[i] = stbtt_ScaleForMappingEmToPixels(&fi[i], 1); 
+
+    printf("%f, %d, %d\n", mt.scale_to_one[i], mt.line_gap[i], mt.ascent[i]);
   }
 
-  memcpy(pch + sizeof(stbtt_packedchar) * 512, &mt, sizeof(mt));
+  memcpy(pch, &mt, sizeof(mt));
   stbtt_PackEnd(&pc);
 
-  stbi_write_png("faune.png", 8192, 8192, 1, px, 0);
+  stbi_write_png("font.png", 8192, 8192, 1, px, 0);
 
-  FILE *f = fopen("faune.dat", "wb");
+  FILE *f = fopen("font.dat", "wb");
   fwrite(pch, pch_size, 1, f);
   fclose(f);
 }

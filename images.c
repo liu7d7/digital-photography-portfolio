@@ -1,9 +1,10 @@
 #include <math.h>
 #include <miniprintf.h>
-#include "images.h"
 #include "state.h"
+#include "images.h"
 
 pic_vertex_t cpu_vb[n_texs][6];
+aabb_2d_t img_bounds[n_texs];
 
 void downloaded_image(
     WGpuImageBitmap bitmap,
@@ -128,8 +129,15 @@ void downloaded_image(
     float x0 = (float)-width, y0 = (float)height;
     float l = em(sqrt, x0*x0 + y0*y0);
     x0 /= l, y0 /= l;
-    float w = -2 * x0;
-    float h = 2 * y0;
+    float w = -1.75 * x0;
+    float h = 1.75 * y0;
+    x0 *= 1.75 * .5;
+    y0 *= 1.75 * .5;
+
+    img_bounds[index] = (aabb_2d_t){
+      {x0, y0 - h},
+      {x0 + w, y0}
+    };
 
     // pic
     add_quad(

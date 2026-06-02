@@ -45,7 +45,7 @@ int draw(double time, void *user_data)
   }
 
   s->time = (float)time;
-  s->anim_progress = v_lerp(s->anim_progress, 1.f, 0.03f);
+  s->anim_progress = v_lerp(s->anim_progress, 1.f, 0.02f);
   s->cmds = wgpu_device_create_command_encoder(s->dev, NULL);
 
   WGpuRenderPassColorAttachment backbuf =
@@ -55,7 +55,8 @@ int draw(double time, void *user_data)
   backbuf.clearValue.b = 0.0;
   backbuf.clearValue.a = 1.0;
 
-  if (atomic_load(&s->n_texs_loaded) != n_texs) {
+  if (atomic_load(&s->n_texs_loaded) != n_texs 
+      || !(s->font.metrics_ready && s->font.tex_ready)) {
     backbuf.view =
       wgpu_canvas_context_get_current_texture_view(s->ctx);
     backbuf.loadOp = WGPU_LOAD_OP_CLEAR;
@@ -68,6 +69,101 @@ int draw(double time, void *user_data)
 
     s->time_loaded_imgs = s->time;
     goto end;
+  }
+
+  if (!s->descs.vb) {
+    // desc_set_t desc_set_new(
+    //     struct state_t *s,
+    //     struct font_metadata_t *fm,
+    //     int n,
+    //     WGpuBuffer *model_mat_ubs /* [n] */, 
+    //     font_draw_cmd_t *cmds /* [n] */);
+
+    // typedef struct font_draw_cmd_t
+    // {
+    //   // assume color is always white.
+    //   v3_t pos;
+    //   float scale;
+    //   char const *text; // can contain \b for bold and \n for newline
+    //   int len;
+    //   int desc_id;
+    // } font_draw_cmd_t; 
+
+    char const *titles[] = {
+      "\\bink drop",
+      "\\bibm ad",
+      "\\b5\xa2 back",
+      "\\bfaces no.1",
+      "\\bfaces no.2",
+      "\\bb/w portrait",
+      "\\balbum cover",
+      "\\bstill life",
+      "\\bsurrealism",
+      "\\bkqed no.1",
+      "\\bkqed no.2",
+      "\\bkqed no.3",
+      "\\bkqed no.4",
+      "\\bkqed no.5",
+    };
+
+    typedef struct desc_t {
+      char const *text;
+      int n_lines;
+    } desc_t;
+
+    desc_t descs[] = {
+      {"\\rdrops of ink in water\\nmake beautiful patterns\\n\\bphoto 1. ", 3},
+      {"\\ran ad for an ibm pc\\nconvertible computer\\n\\bphoto 2. ", 3},
+      {"\\rstreet-art-esque edit\\nof nickelback\\n\\bphoto 3. ", 3},
+      {"\\rcommunity voices.\\nizumi wei\\n\\bphoto 4. ", 3},
+      {"\\rcommunity voices.\\nmichelle boire\\n\\bphoto 5. ", 3},
+      {"\\rblack & white text\\nportrait of th""\xe9""a\\n\\bphoto 6. ", 3},
+      {"\\rremixed album cover for\\nabelard's meta valley\\n\\bphoto 7. ", 3},
+      {"\\rchina pot, lights,\\nartificial flowers\\n\\bphoto 8. ", 3},
+      {"\\rmixture of stock images,\\nmy photos, and blender\\n\\bphoto 9. ", 3},
+      {"\\ramerican creed photo essay.\\nskateboarder posing in BART station\\n\\bphoto 10.", 3},
+      {"\\ramerican creed photo essay.\\nfriend slurping noodles\\n\\bphoto 11.", 3},
+      {"\\ramerican creed photo essay.\\nwoman feeding birds\\n\\bphoto 12.", 3},
+      {"\\ramerican creed photo essay.\\ntrain arriving at platform\\n\\bphoto 13.", 3},
+      {"\\ramerican creed photo essay.\\ntrain leaving station\\n\\bphoto 14.", 3},
+    };
+
+    float line_height_0 = s->font.mt.ascent[0] * s->font.mt.scale_to_one[0] / 3;
+
+    font_draw_cmd_t *draw_cmds = malloc(sizeof(font_draw_cmd_t) * n_texs * 2);
+    for (int i = 0; i < n_texs; i++) {
+      font_draw_cmd_t title = {
+        .scale = 0.3,
+        .desc_id = i,
+        .justify = 1,
+        .pos = {img_bounds[i].max.x, img_bounds[i].min.y - 0.03},
+        .text = titles[i]
+      };
+
+      font_draw_cmd_t desc = {
+        .scale = 0.2,
+        .desc_id = i,
+        .justify = 0,
+        .pos = {
+          img_bounds[i].min.x,
+          img_bounds[i].max.y + line_height_0 * .25 * .2 * descs[i].n_lines + 0.025
+        },
+        .text = descs[i].text
+      };
+
+      draw_cmds[i * 2] = title;
+      draw_cmds[i * 2 + 1] = desc;
+    }
+
+    s->descs = desc_set_new(
+        s,
+        &s->font,
+        14,
+        28,
+        s->model_mat_ubs,
+        draw_cmds);
+
+    emscripten_mini_stdio_printf("initialized desc_set");
   }
 
   /*--- draw :> update post-process buffer ---*/
@@ -184,6 +280,24 @@ int draw(double time, void *user_data)
 
     wgpu_render_pass_encoder_draw(enc, 6, 1, 0, 0);
 
+    // prev text
+    wgpu_render_pass_encoder_set_bind_group(
+        enc, 
+        1,
+        s->descs.bgs[s->prev_index],
+        0, 0);
+
+    int begin = s->descs.desc_byte_bounds[s->prev_index];
+    int count = s->descs.desc_byte_bounds[s->prev_index + 1] - begin;
+    wgpu_render_pass_encoder_set_vertex_buffer(
+        enc,
+        0,
+        s->descs.vb,
+        begin,
+        WGPU_MAX_SIZE);
+
+    wgpu_render_pass_encoder_draw(enc, count / 20, 1, 0, 0);
+
     // current
     wgpu_render_pass_encoder_set_bind_group(enc, 0, s->per_frame_bgs[0], 0, 0);
     wgpu_render_pass_encoder_set_bind_group(
@@ -200,6 +314,24 @@ int draw(double time, void *user_data)
         sizeof(cpu_vb[0]));
 
     wgpu_render_pass_encoder_draw(enc, 6, 1, 0, 0);
+
+    // current text
+    wgpu_render_pass_encoder_set_bind_group(
+        enc, 
+        1,
+        s->descs.bgs[s->current_index],
+        0, 0);
+
+    begin = s->descs.desc_byte_bounds[s->current_index];
+    count = s->descs.desc_byte_bounds[s->current_index + 1] - begin;
+    wgpu_render_pass_encoder_set_vertex_buffer(
+        enc,
+        0,
+        s->descs.vb,
+        begin,
+        WGPU_MAX_SIZE);
+
+    wgpu_render_pass_encoder_draw(enc, count / 20, 1, 0, 0);
 
     wgpu_render_pass_encoder_end(enc);
 
@@ -349,6 +481,26 @@ void obtained_web_gpu_device(
         0, NULL);
   }
 
+  /*--- init :> s->fonts */
+  if (!s->font.tex) /* @hack(liu7d7): condition is weird. */ {
+    downloaded_font_args_t *args0 = malloc(sizeof(*args0)),
+                           *args1 = malloc(sizeof(*args1));
+
+    args0->s = args1->s = s;
+    args0->dst = args1->dst = &s->font;
+
+    download_binary_file(
+        "font.dat",
+        downloaded_font_metadata,
+        args0);
+
+    wgpu_load_image_bitmap_from_url_async(
+        "font.png",
+        WGPU_FALSE,
+        downloaded_font_image,
+        args1);
+  }
+
   /*--- init :> s->texs ---*/
   if (!s->texs[0]) {
     for (int i = 0; i < 2; i++) {
@@ -378,7 +530,7 @@ void obtained_web_gpu_device(
     ub_desc.usage = 
       WGPU_BUFFER_USAGE_STORAGE | WGPU_BUFFER_USAGE_COPY_DST;
     ub_desc.mappedAtCreation = WGPU_FALSE;
-
+    
     s->opacity_ubs[0] = wgpu_device_create_buffer(s->dev, &ub_desc);
     s->opacity_ubs[1] = wgpu_device_create_buffer(s->dev, &ub_desc);
   }

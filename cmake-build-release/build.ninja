@@ -116,8 +116,22 @@ build CMakeFiles/index.dir/anim.c.o: C_COMPILER__index_unscanned_Release C$:/dev
   OBJECT_DIR = CMakeFiles\index.dir
   OBJECT_FILE_DIR = CMakeFiles\index.dir
 
+build CMakeFiles/index.dir/font.c.o: C_COMPILER__index_unscanned_Release C$:/dev/port/font.c || cmake_object_order_depends_target_index
+  DEP_FILE = CMakeFiles\index.dir\font.c.o.d
+  FLAGS = -isystem C:\dev\emsdk\upstream\emscripten\cache\sysroot\include -Wall -Wno-missing-braces -o3 -ferror-limit=100 -O3 -DNDEBUG
+  INCLUDES = -IC:/dev/port/wasm_webgpu/lib -IC:/dev/port/wasm_webgpu/samples/common
+  OBJECT_DIR = CMakeFiles\index.dir
+  OBJECT_FILE_DIR = CMakeFiles\index.dir
+
 build CMakeFiles/index.dir/state.c.o: C_COMPILER__index_unscanned_Release C$:/dev/port/state.c || cmake_object_order_depends_target_index
   DEP_FILE = CMakeFiles\index.dir\state.c.o.d
+  FLAGS = -isystem C:\dev\emsdk\upstream\emscripten\cache\sysroot\include -Wall -Wno-missing-braces -o3 -ferror-limit=100 -O3 -DNDEBUG
+  INCLUDES = -IC:/dev/port/wasm_webgpu/lib -IC:/dev/port/wasm_webgpu/samples/common
+  OBJECT_DIR = CMakeFiles\index.dir
+  OBJECT_FILE_DIR = CMakeFiles\index.dir
+
+build CMakeFiles/index.dir/desc.c.o: C_COMPILER__index_unscanned_Release C$:/dev/port/desc.c || cmake_object_order_depends_target_index
+  DEP_FILE = CMakeFiles\index.dir\desc.c.o.d
   FLAGS = -isystem C:\dev\emsdk\upstream\emscripten\cache\sysroot\include -Wall -Wno-missing-braces -o3 -ferror-limit=100 -O3 -DNDEBUG
   INCLUDES = -IC:/dev/port/wasm_webgpu/lib -IC:/dev/port/wasm_webgpu/samples/common
   OBJECT_DIR = CMakeFiles\index.dir
@@ -131,9 +145,9 @@ build CMakeFiles/index.dir/state.c.o: C_COMPILER__index_unscanned_Release C$:/de
 #############################################
 # Link the executable index.html
 
-build index.html: CXX_EXECUTABLE_LINKER__index_Release CMakeFiles/index.dir/main.c.o CMakeFiles/index.dir/images.c.o CMakeFiles/index.dir/input.c.o CMakeFiles/index.dir/anim.c.o CMakeFiles/index.dir/state.c.o | libwebgpu.a || libwebgpu.a
+build index.html: CXX_EXECUTABLE_LINKER__index_Release CMakeFiles/index.dir/main.c.o CMakeFiles/index.dir/images.c.o CMakeFiles/index.dir/input.c.o CMakeFiles/index.dir/anim.c.o CMakeFiles/index.dir/font.c.o CMakeFiles/index.dir/state.c.o CMakeFiles/index.dir/desc.c.o | libwebgpu.a || libwebgpu.a
   FLAGS = -Wall -Wno-missing-braces -o3 -ferror-limit=100 -O3 -DNDEBUG
-  LINK_FLAGS = -Wall --js-library C:/dev/port/wasm_webgpu/lib/lib_webgpu.js --js-library C:/dev/port/wasm_webgpu/samples/common/lib_demo.js --js-library C:/dev/port/wasm_webgpu/samples/common/library_miniprintf.js -sMINIMAL_RUNTIME=2 -sTEXTDECODER=2 -sABORTING_MALLOC=0 -sENVIRONMENT=web --shell-file "C:/dev/port/shell.html" -sTOTAL_STACK=16KB -sINITIAL_MEMORY=4MB -sALLOW_MEMORY_GROWTH=1 -Wno-pthreads-mem-growth -Wno-experimental -sUSE_SDL=0 -sFILESYSTEM=0 -sAUTO_JS_LIBRARIES=0 -sDISABLE_EXCEPTION_THROWING=1 -lmath.js -lhtml5.js -lint53.js --closure-args=--externs=C:/dev/port/wasm_webgpu/lib/webgpu-closure-externs.js  --closure 1
+  LINK_FLAGS = -Wall --js-library C:/dev/port/wasm_webgpu/lib/lib_webgpu.js --js-library C:/dev/port/wasm_webgpu/samples/common/lib_demo.js --js-library C:/dev/port/wasm_webgpu/samples/common/library_miniprintf.js --js-library C:/dev/port/lib_dlbin.js -sMINIMAL_RUNTIME=2 -sTEXTDECODER=2 -sABORTING_MALLOC=0 -sENVIRONMENT=web --shell-file "C:/dev/port/shell.html" -sTOTAL_STACK=16KB -sINITIAL_MEMORY=4MB -sALLOW_MEMORY_GROWTH=1 -Wno-pthreads-mem-growth -Wno-experimental -sUSE_SDL=0 -sFILESYSTEM=0 -sAUTO_JS_LIBRARIES=0 -sDISABLE_EXCEPTION_THROWING=1 -lmath.js -lhtml5.js -lint53.js --closure-args=--externs=C:/dev/port/wasm_webgpu/lib/webgpu-closure-externs.js  --closure 1
   LINK_LIBRARIES = libwebgpu.a
   OBJECT_DIR = CMakeFiles\index.dir
   POST_BUILD = cd .

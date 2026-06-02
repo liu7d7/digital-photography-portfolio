@@ -1,35 +1,30 @@
 <!DOCTYPE html>
-<html lang="en-us" style='margin:0;overflow:hidden;background-color:black;color:white;width:100%;height:100%'>
+<html lang="en-us" style='margin:0;overflow:hidden;background-color:black;color:white;width:100%;height:100%;scroll-behavior:smooth;'>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta charset="utf-8">
     <title>michael liu digital photo</title>
-    <link rel="preload" href="./fdb.otf" as="font" crossorigin>
-    <link rel="preload" href="./fdl.otf" as="font" crossorigin>
+    <link rel="preload" href="./ip1.otf" as="font" crossorigin>
+    <link rel="preload" href="./ip0.otf" as="font" crossorigin>
     <meta name="referrer" content="strict-origin-when-cross-origin"></meta>
     <style type="text/css">
         @font-face {
           font-family: "fd";
-          src: url("./fdb.otf") format("opentype");
+          src: url("./ip1.ttf") format("truetype");
         }
 
-        @font-face {
-          font-family: "fti";
-          src: url("./fti.otf") format("opentype");
-        }
-
-        i {
-          font-family: "fti";
-        }
-        
         @font-face {
           font-family: "fdl";
-          src: url("./fdl.otf") format("opentype");
+          src: url("./ip0.ttf") format("truetype");
+        }
+
+        a {
+          color: oklch(70.7% 0.165 254.624);
         }
         
         .clb {
-          border-radius:4rem;border:0.125rem solid white;background-color:black;color:white;padding:0.33rem;padding-left:1rem;padding-right:1rem;font:1rem "fd", sans-serif;transition:transform 0.1s ease-in-out;
+          border-radius:4rem;border:0.175rem solid white;background-color:black;color:white;padding:0.5rem;padding-left:1rem;padding-right:1rem;font:1rem "fd", sans-serif;transition:transform 0.1s ease-in-out;
         }
         
         .clb:hover {
@@ -58,6 +53,17 @@
           align-content:center;
           align-items:center;
         }
+
+        .mid {
+          width:100%;
+          height:100%;
+          display:flex;
+          flex-direction:column;
+          place-content:center;
+          align-content:center;
+          align-items:center;
+        }
+
     </style>
   </head>
   <body style='margin:0;overflow:hidden;background-color:black;position:relative;width:100%;height:100%;'>
@@ -68,7 +74,7 @@
           <img src='14.jpg' style='width:50%;aspect-ratio:1;'></img>
         </div>
         <div class='half'>
-          <div style='font:1.5rem "fd", sans-serif;width:100%'>
+          <div style='font:1.75rem "fd", sans-serif;width:100%'>
             about me!
           </div>
           <div style='font:1rem "fdl", sans-serif'>
@@ -81,10 +87,13 @@
             <p>
               welcome to my portfolio! please enjoy this collection of my artwork from my digital photography class and from hobby :D
             </p>
+            <p>
+            <a href="#essay">photo essay.</a> | <a href="#objects">objects.</a> | <a href="#artsy">abstract.</a> | <a href="#blender">rendered.</a> | <a href="#resume">resume</a>
+            </p>
           </div>
         </div>
       </div>
-      <div class='tiny-page' style='position:relative'>
+      <div id='essay' class='tiny-page' style='position:relative'>
         <div class='half'>
           <div style='display:grid;grid-template-columns:repeat(6,auto);grid-template-rows:repeat(2,auto);width:66%;gap:1rem'>
             <img style="grid-column:1/span 2;grid-row:1;max-width:100%;" loading="lazy" src="9.webp"></img>
@@ -95,8 +104,8 @@
           </div>
         </div>
         <div class='half'>
-          <div style='font:1.5rem "fdl", sans-serif;width:100%'>
-            you take public transit? <span style='font:1.5rem "fd", sans-serif'>that tracks.</span>
+          <div style='font:1.75rem "fdl", sans-serif;width:100%'>
+            you take public transit? <span style='font:1.75rem "fd", sans-serif'>that tracks.</span>
           </div>
           <div style='font:1rem "fdl", sans-serif'>
             <p>
@@ -111,7 +120,7 @@
           </div>
         </div>
       </div>
-      <div class="tiny-page">
+      <div id='objects'class="tiny-page">
         <div class="half">
           <div style='display:grid;grid-template-columns:repeat(3,auto);grid-template-rows:auto;width:75%;gap:1rem;place-items:center;'>
             <img style="grid-column:1;grid-row:1;max-width:100%;" loading="lazy" src="1.webp"></img>
@@ -120,7 +129,7 @@
           </div>
         </div>
         <div class="half">
-          <div style='font:1.5rem "fd", sans-serif;width:100%'>
+          <div style='font:1.75rem "fd", sans-serif;width:100%'>
             objects.
           </div>
           <div style='font:1rem "fdl", sans-serif;width:100%'>
@@ -133,7 +142,7 @@
           </div>
         </div>
       </div>
-      <div class="tiny-page">
+      <div id='artsy'class="tiny-page">
         <div class="half">
            <div style='display:grid;grid-template-columns:2.193fr 1fr;grid-template-rows:auto;height:50%;width:75%;max-width:75%;gap:1rem;place-items:center;'>
             <img style="grid-column:1;grid-row:1;max-height:100%;max-width:100%;" loading="lazy" src="2.webp"></img>
@@ -141,8 +150,8 @@
           </div>
         </div>
         <div class="half">
-          <div style='font:1.5rem "fd", sans-serif;width:100%'>
-            artsy.
+          <div style='font:1.75rem "fd", sans-serif;width:100%'>
+            abstract.
           </div>
           <div style='font:1rem "fdl", sans-serif;width:100%'>
             <p style='width:100%'>
@@ -154,7 +163,7 @@
           </div>
         </div>
       </div>
-      <div class="tiny-page">
+      <div id='blender'class="tiny-page">
         <div class="half">
            <div style='display:grid;grid-template-columns:1.293fr 1fr;grid-template-rows:auto;height:50%;width:75%;max-width:75%;gap:1rem;place-items:center;'>
             <img style="grid-column:1;grid-row:1;max-height:100%;max-width:100%;" loading="lazy" src="6.webp"></img>
@@ -162,8 +171,8 @@
           </div>
         </div>
         <div class="half">
-          <div style='font:1.5rem "fd", sans-serif;width:100%'>
-            blending.
+          <div style='font:1.75rem "fd", sans-serif;width:100%'>
+            rendered.
           </div>
           <div style='font:1rem "fdl", sans-serif;width:100%'>
             <p style='width:100%'>
@@ -172,9 +181,14 @@
           </div>
         </div>
       </div>
+      <div id='resume' class='tiny-page'>
+         <div class="mid">
+          <embed src='resume.pdf' style='width:85%;height:75%;'></img>
+        </div>
+      </div>
     </div>
     <div class='smooth-opacity' id='main' style='display:flex;flex-direction:column;margin:auto;position:absolute;top:0;left:0;width:100vw;height:100vh;align-items:center;place-content:center;align-content:center;'>
-      <div style='font:1.5rem "fd", sans-serif;'>
+      <div style='font:1.75rem "fd", sans-serif;'>
         michael liu
       </div>
       <div style='padding-top:0.5rem'></div>

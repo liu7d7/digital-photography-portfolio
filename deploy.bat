@@ -21,11 +21,13 @@ copy cmake-build-release\12.webp site\12.webp
 copy cmake-build-release\13.webp site\13.webp
 copy cmake-build-release\14.jpg site\14.jpg
 
-copy cmake-build-release\fdb.otf site\fdb.otf
-copy cmake-build-release\fdl.otf site\fdl.otf
+copy cmake-build-release\ip0.ttf site\ip0.ttf
+copy cmake-build-release\ip1.ttf site\ip1.ttf
 
-copy cmake-build-release\faune.png site\faune.png
-copy cmake-build-release\faune.dat site\faune.dat
+copy cmake-build-release\resume.pdf site\resume.pdf
+
+copy cmake-build-release\font.png site\font.png
+copy cmake-build-release\font.dat site\font.dat
 
 pushd site
 git add . && git commit -m "updates" && git push

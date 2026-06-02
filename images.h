@@ -5,6 +5,12 @@
 
 #define n_texs 14
 
+typedef struct aabb_2d_t 
+{
+  v2_t min;
+  v2_t max;
+} aabb_2d_t;
+
 typedef struct pic_vertex_t
 {
   v3_t pos;
@@ -12,6 +18,7 @@ typedef struct pic_vertex_t
 } pic_vertex_t;
 
 extern pic_vertex_t cpu_vb[n_texs][6];
+extern aabb_2d_t img_bounds[n_texs];
 
 typedef struct pic_pose_t
 {

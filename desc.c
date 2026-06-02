@@ -1,18 +1,20 @@
 #include "state.h"
+#include <miniprintf.h>
 #include "desc.h"
 #include <string.h>
 
 desc_set_t desc_set_new(
     state_t *s,
-    int n,
     font_metadata_t *fm,
+    int n_unique_ids,
+    int n,
     WGpuBuffer *model_mat_ubs /* [n] */, 
     font_draw_cmd_t *cmds /* [n] */)
 {
-  desc_set_t out = {.n_descs = n};
-  void *mem = malloc(sizeof(int) * (2 * n * 1));
-  out.desc_byte_bounds = mem;
-  out.desc_byte_bounds[0] = 0;
+  desc_set_t out = {.n_unique_ids = n};
+  out.desc_byte_bounds = malloc(sizeof(int) * (n_unique_ids + 1));
+  out.desc_vert_bounds = malloc(sizeof(int) * (n_unique_ids + 1));
+  out.desc_vert_bounds[0] = out.desc_byte_bounds[0] = 0;
 
   int total_length = 0;
   for (int i = 0; i < n; i++) {
@@ -30,11 +32,13 @@ desc_set_t desc_set_new(
   for (int i = 0; i < n; i++) {
     v3_t pos = cmds[i].pos;
     int font = 0;
+    float scale = cmds[i].scale * fm->mt.scale_to_one[font];
     int len = cmds[i].len;
     char const *text = cmds[i].text;
-    float scale = cmds[i].scale;
+    float max_pos_x = pos.x;
+    int begin = end;
     for (char const *cp = text; cp != text + len; cp++) { 
-      char c = *cp;
+      uint8_t c = *cp;
       if (c == '\\') {
         if (cp == text + len - 1) break;
         c = *(++cp);
@@ -42,20 +46,18 @@ desc_set_t desc_set_new(
           goto regular_character;
         } else if (c == 'b') {
           font = 1;
-          goto escape_charater;
         } else if (c == 'r') {
           font = 0;
-          goto escape_charater;
         } else if (c == 'n') {
           pos.x = cmds[i].pos.x;
-          pos.y += fm->mt.ascent_in_pixels[font];
+          pos.y += fm->mt.ascent[font] / 3. * scale;
         } else {
           continue;
         }
 
-escape_charater:
         if (cp == text + len - 1) break;
-        c = *(++cp);
+        scale = cmds[i].scale * fm->mt.scale_to_one[font];
+        continue;
       }
 
 regular_character: {}
@@ -64,9 +66,10 @@ regular_character: {}
       float py0 = pos.y + pch.yoff * scale;
       float px1 = pos.x + pch.xoff2 * scale;
       float py1 = pos.y + pch.yoff2 * scale;
+
       verts[end++] = (vertex_t){
-        .pos = {px0, py0}, .
-          uv = {pch.x0 / 8192.f, pch.y0 / 8192.f}
+        .pos = {px0, py0}, 
+        .uv = {pch.x0 / 8192.f, pch.y0 / 8192.f}
       };
 
       verts[end++] = (vertex_t){
@@ -93,21 +96,39 @@ regular_character: {}
         .pos = {px0, py0}, 
         .uv = {pch.x0 / 8192.f, pch.y0 / 8192.f}
       };
+
       pos.x += pch.xadvance * scale;
+      max_pos_x = fmaxf(pos.x, max_pos_x);
     }
-    
-    out.desc_byte_bounds[cmds[i].desc_id] = end * sizeof(vertex_t);
+
+    out.desc_byte_bounds[cmds[i].desc_id + 1] = end * sizeof(vertex_t);
+    out.desc_vert_bounds[cmds[i].desc_id + 1] = end;
+
+    float width = max_pos_x - cmds[i].pos.x;
+    if (cmds[i].justify) {
+      for (int j = begin; j < end; j++) {
+        verts[j].pos.x -= width / cmds[i].justify;
+      }
+    }
   }
 
-  out.bgs = mem + sizeof(int) * n + 1;
-  for (int i = 0; i < n; i++) {
+  for (int i = 0; i < n_unique_ids; i++) {
+    emscripten_mini_stdio_printf("dsn: %d\n", out.desc_byte_bounds[i + 1]);
+  }
+
+  out.bgs = malloc(sizeof(WGpuBindGroup) * n_unique_ids);
+  for (int i = 0; i < n_unique_ids; i++) {
     WGpuBindGroupEntry bges[] = {
       {.binding=0, .resource=fm->tex},
       {.binding=1, .resource=s->d_samp},
-      {.binding=2, .resource=model_mat_ubs[cmds[i].desc_id]}
+      {.binding=2, .resource=model_mat_ubs[i]}
     };
 
-    out.bgs[i] = wgpu_device_create_bind_group(s->dev, s->font_rp, bges, 3);
+    out.bgs[i] = wgpu_device_create_bind_group(
+        s->dev,
+        wgpu_render_pipeline_get_bind_group_layout(s->main_rp, 1),
+        bges,
+        3);
   }
 
   WGpuBufferDescriptor vb_desc = {
