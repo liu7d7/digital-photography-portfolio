@@ -49,6 +49,15 @@ desc_set_t desc_set_new(
         } else if (c == 'r') {
           font = 0;
         } else if (c == 'n') {
+          float width = pos.x - cmds[i].pos.x;
+          if (cmds[i].justify) {
+            for (int j = begin; j < end; j++) {
+              verts[j].pos.x -= width / cmds[i].justify;
+            }
+
+            begin = end;
+          }
+
           pos.x = cmds[i].pos.x;
           pos.y += fm->mt.ascent[font] / 3. * scale;
         } else {
@@ -104,7 +113,7 @@ regular_character: {}
     out.desc_byte_bounds[cmds[i].desc_id + 1] = end * sizeof(vertex_t);
     out.desc_vert_bounds[cmds[i].desc_id + 1] = end;
 
-    float width = max_pos_x - cmds[i].pos.x;
+    float width = pos.x - cmds[i].pos.x;
     if (cmds[i].justify) {
       for (int j = begin; j < end; j++) {
         verts[j].pos.x -= width / cmds[i].justify;

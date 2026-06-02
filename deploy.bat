@@ -14,6 +14,7 @@ copy cmake-build-release\5.webp site\5.webp
 copy cmake-build-release\6.webp site\6.webp
 copy cmake-build-release\7.webp site\7.webp
 copy cmake-build-release\8.webp site\8.webp
+copy cmake-build-release\8.2.webp site\8.2.webp
 copy cmake-build-release\9.webp site\9.webp
 copy cmake-build-release\10.webp site\10.webp
 copy cmake-build-release\11.webp site\11.webp

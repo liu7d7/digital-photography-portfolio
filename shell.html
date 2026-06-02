@@ -183,7 +183,8 @@
       </div>
       <div id='resume' class='tiny-page'>
          <div class="mid">
-          <embed src='resume.pdf' style='width:85%;height:75%;'></img>
+           <script>let oldScrollTo = window.scrollTo; window.scrollTo = function(){};</script>
+           <object data='resume.pdf' style='width:85%;height:75%;' onload="setTimeout(()=>window.scrollTo = oldScrollTo, 400);"></object>
         </div>
       </div>
     </div>

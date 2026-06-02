@@ -35,7 +35,7 @@ static char const *tex_paths[] = {
   "5.webp",
   "6.webp",
   "7.webp",
-  "8.webp",
+  "8.2.webp",
   "9.webp",
   "10.webp",
   "11.webp",

@@ -38,7 +38,6 @@ int draw(double time, void *user_data)
 #define x(a, b) wgpu_object_destroy(s->b); s->b = 0;
     x_state_all_wgpu_dependent_fields;
 #undef x
-
     emscripten_mini_stdio_printf("resizing\n");
     obtained_web_gpu_device(s->dev, s);
     return EM_FALSE;
@@ -90,20 +89,20 @@ int draw(double time, void *user_data)
     // } font_draw_cmd_t; 
 
     char const *titles[] = {
-      "\\bink drop",
-      "\\bibm ad",
-      "\\b5\xa2 back",
-      "\\bfaces no.1",
-      "\\bfaces no.2",
-      "\\bb/w portrait",
-      "\\balbum cover",
-      "\\bstill life",
-      "\\bsurrealism",
-      "\\bkqed no.1",
-      "\\bkqed no.2",
-      "\\bkqed no.3",
-      "\\bkqed no.4",
-      "\\bkqed no.5",
+      "\\b1. ink drop",
+      "\\b2. ibm ad",
+      "\\b3. 5\xa2 back",
+      "\\b4. faces no.1",
+      "\\b5. faces no.2",
+      "\\b6. b/w portrait",
+      "\\b7. album cover",
+      "\\b8. warmth",
+      "\\b9. surrealism",
+      "\\b10. kqed no.1",
+      "\\b11. kqed no.2",
+      "\\b12. kqed no.3",
+      "\\b13. kqed no.4",
+      "\\b14. kqed no.5",
     };
 
     typedef struct desc_t {
@@ -112,20 +111,20 @@ int draw(double time, void *user_data)
     } desc_t;
 
     desc_t descs[] = {
-      {"\\rdrops of ink in water\\nmake beautiful patterns\\n\\bphoto 1. ", 3},
-      {"\\ran ad for an ibm pc\\nconvertible computer\\n\\bphoto 2. ", 3},
-      {"\\rstreet-art-esque edit\\nof nickelback\\n\\bphoto 3. ", 3},
-      {"\\rcommunity voices.\\nizumi wei\\n\\bphoto 4. ", 3},
-      {"\\rcommunity voices.\\nmichelle boire\\n\\bphoto 5. ", 3},
-      {"\\rblack & white text\\nportrait of th""\xe9""a\\n\\bphoto 6. ", 3},
-      {"\\rremixed album cover for\\nabelard's meta valley\\n\\bphoto 7. ", 3},
-      {"\\rchina pot, lights,\\nartificial flowers\\n\\bphoto 8. ", 3},
-      {"\\rmixture of stock images,\\nmy photos, and blender\\n\\bphoto 9. ", 3},
-      {"\\ramerican creed photo essay.\\nskateboarder posing in BART station\\n\\bphoto 10.", 3},
-      {"\\ramerican creed photo essay.\\nfriend slurping noodles\\n\\bphoto 11.", 3},
-      {"\\ramerican creed photo essay.\\nwoman feeding birds\\n\\bphoto 12.", 3},
-      {"\\ramerican creed photo essay.\\ntrain arriving at platform\\n\\bphoto 13.", 3},
-      {"\\ramerican creed photo essay.\\ntrain leaving station\\n\\bphoto 14.", 3},
+      {"\\rdrops of ink in water\\nmake beautiful patterns", 2},
+      {"\\ran ad for an ibm pc\\nconvertible computer", 2},
+      {"\\rstreet-art-esque edit\\nof nickelback", 2},
+      {"\\rcommunity voices.\\nizumi wei", 2},
+      {"\\rcommunity voices.\\nmichelle boire", 2},
+      {"\\rblack & white text\\nportrait of th""\xe9""a", 2},
+      {"\\rremixed album cover for\\nabelard's meta valley", 2},
+      {"\\rstill life w/ china pot, lights,\\nand artificial flowers", 2},
+      {"\\rmixture of stock images,\\nmy photos, and blender", 2},
+      {"\\ramerican creed photo essay.\\nskateboarder posing in BART station", 2},
+      {"\\ramerican creed photo essay.\\nfriend slurping noodles", 2},
+      {"\\ramerican creed photo essay.\\nwoman feeding birds", 2},
+      {"\\ramerican creed photo essay.\\ntrain arriving at platform", 2},
+      {"\\ramerican creed photo essay.\\ntrain leaving station", 2},
     };
 
     float line_height_0 = s->font.mt.ascent[0] * s->font.mt.scale_to_one[0] / 3;
@@ -133,20 +132,21 @@ int draw(double time, void *user_data)
     font_draw_cmd_t *draw_cmds = malloc(sizeof(font_draw_cmd_t) * n_texs * 2);
     for (int i = 0; i < n_texs; i++) {
       font_draw_cmd_t title = {
-        .scale = 0.3,
+        .scale = 0.15,
         .desc_id = i,
-        .justify = 1,
-        .pos = {img_bounds[i].max.x, img_bounds[i].min.y - 0.03},
+        .justify = 0,
+        .pos = {img_bounds[i].min.x, img_bounds[i].max.y + line_height_0 * .25 * .475 + 0.03, 3},
         .text = titles[i]
       };
 
       font_draw_cmd_t desc = {
-        .scale = 0.2,
+        .scale = 0.125,
         .desc_id = i,
-        .justify = 0,
+        .justify = 1,
         .pos = {
-          img_bounds[i].min.x,
-          img_bounds[i].max.y + line_height_0 * .25 * .2 * descs[i].n_lines + 0.025
+          img_bounds[i].max.x,
+          img_bounds[i].max.y + line_height_0 * .25 * .35 + 0.02,
+          3
         },
         .text = descs[i].text
       };
@@ -164,6 +164,7 @@ int draw(double time, void *user_data)
         draw_cmds);
 
     emscripten_mini_stdio_printf("initialized desc_set");
+    s->time_loaded_imgs = s->time;
   }
 
   /*--- draw :> update post-process buffer ---*/
