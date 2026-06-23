@@ -448,6 +448,26 @@ void obtained_web_gpu_device(
         fragment_shader_source, "main",
         0, NULL);
   }
+
+  /*--- init :> s->fonts */
+  if (!s->font.tex) /* @hack(liu7d7): condition is weird. */ {
+    downloaded_font_args_t *args0 = malloc(sizeof(*args0)),
+                           *args1 = malloc(sizeof(*args1));
+
+    args0->s = args1->s = s;
+    args0->dst = args1->dst = &s->font;
+
+    download_binary_file(
+        "font.dat",
+        downloaded_font_metadata,
+        args0);
+
+    wgpu_load_image_bitmap_from_url_async(
+        "font.png",
+        WGPU_FALSE,
+        downloaded_font_image,
+        args1);
+  }
   
   /*--- init :> s->stars_rp, s->crt_rp ---*/
   if (!s->stars_rp || !s->crt_rp) {
@@ -480,26 +500,6 @@ void obtained_web_gpu_device(
         post_process_vertex_shader_source, "main",
         crt_fragment_shader_source, "main",
         0, NULL);
-  }
-
-  /*--- init :> s->fonts */
-  if (!s->font.tex) /* @hack(liu7d7): condition is weird. */ {
-    downloaded_font_args_t *args0 = malloc(sizeof(*args0)),
-                           *args1 = malloc(sizeof(*args1));
-
-    args0->s = args1->s = s;
-    args0->dst = args1->dst = &s->font;
-
-    download_binary_file(
-        "font.dat",
-        downloaded_font_metadata,
-        args0);
-
-    wgpu_load_image_bitmap_from_url_async(
-        "font.png",
-        WGPU_FALSE,
-        downloaded_font_image,
-        args1);
   }
 
   /*--- init :> s->texs ---*/
